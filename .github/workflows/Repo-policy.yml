@@ -1,0 +1,71 @@
+name: Repository
+  
+on: 
+  issues:
+    types:
+      - opened
+      - edited
+
+env: 
+  dismiss_pull_request_Team: Punith0480
+  check_build_status: build,test
+  Admin: Punith0480
+  Writer: Punith0480
+  TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs: 
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Creating a repo from Template
+      if: contains(github.event.issue.labels.*.name, 'policies')
+      run: | 
+          echo "Creating a repository using template"
+          curl \
+          -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ env.TOKEN }}" \
+          https://api.github.com/repo/Punith0480/helloworld-action-main/generate \
+          -d '{"name":"Aj-createdrepo1","private":"true"}'
+          
+    
+    - name: Creating branch policy
+      if: ${{ contains(github.ref, 'refs/heads/Main/') }} && contains(github.event.issue.labels.*.name, 'policies')
+      run: | 
+        echo "Branch_Policies"  
+        curl \
+        -X PUT \
+        -H "Accept: application/vnd.github.v3+json" \
+        -H "Authorization: token ${{ env.TOKEN }}" \
+        https://api.github.com/repos/${{github.repository}}/branches/${{github.ref_name}}/protection \
+        -d '{"required_status_checks":{"strict":true,"contexts":["${{ env.check_build_status }}"]},"enforce_admins":true,"required_pull_request_reviews":{"dismissal_restrictions":{"users":["${{ env.dismiss_pull_request_User }}"],"teams":["${{ env.dismiss_pull_request_Team }}"]},"dismiss_stale_reviews":true,"require_code_owner_reviews":false,"required_approving_review_count":2},"restrictions":{"users":[""],"teams":[""],"apps":["apps"],"required_conversation_resolution":true,"required_linear_history":false}'
+        
+    - name: Adding Admin Permissions 
+      if: contains(github.event.issue.labels.*.name, 'policies') && contains(github.event.issue.labels.*.name, 'policies')
+      run: | 
+        curl \
+        -X PUT \
+        -H "Accept: application/vnd.github.v3+json" \
+        -H "Authorization: token ${{ env.TOKEN }}" \
+        https://api.github.com/orgs/mPunith31/teams/${{ env.Admin }}/repos/${{github.repository}} \
+        -d '{"permission":"admin"}'
+        
+    - name: Adding write Permissions 
+      if: contains(github.event.issue.labels.*.name, 'policies') && contains(github.event.issue.labels.*.name, 'policies')
+      run: | 
+        curl \
+        -X PUT \
+        -H "Accept: application/vnd.github.v3+json" \
+        -H "Authorization: token ${{ env.TOKEN }}" \
+        https://api.github.com/orgs/mPunith31/teams/${{ env.Writer }}/repos/${{github.repository}} \
+        -d '{"permission":"push"}'  
+        
+    - name: Automerging enabled.
+      if: contains(github.event.issue.labels.*.name, 'policies') && contains(github.event.issue.labels.*.name, 'policies')
+      run: | 
+          curl \
+          -X PATCH \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ env.TOKEN }}" \
+          https://api.github.com/repos/${{github.repository}} \
+          -d '{"allow_auto_merge":true}'
